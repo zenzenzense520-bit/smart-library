@@ -4,6 +4,111 @@
 
 默认数据库是 Django SQLite，适合开发和演示；通过 `DATABASE_URL` 可以切换 PostgreSQL。当前目录保留 Vue SPA，后端位于 `backend/`。
 
+---
+
+## 🚀 快速启动指南
+
+> 💡 **重要说明**：本项目为**前后端分离全栈项目**，前端界面依赖后端 REST API（默认 `8000` 端口）提供数据支持。**请不要直接双击打开 `index.html`**（浏览器安全策略会拦截本地 ES Module 导致白屏）。
+
+### 方案一：Windows 一键启动（最推荐 · 双击即开）
+
+项目根目录下已为您内置好一键启动脚本，自动同时唤起后端服务与前端界面，并自动在浏览器中弹出：
+
+- **方式 1**：在文件管理器中，直接**双击运行根目录下的 `启动项目.bat`**。
+- **方式 2**：在 PowerShell 终端运行：
+  ```powershell
+  .\启动项目.ps1
+  ```
+启动后浏览器将自动打开 `http://localhost:5173`。
+
+---
+
+### 方案二：手动双终端标准启动
+
+如果您希望在终端手动观察前后端输出，请分别开启 **两个独立的终端窗口**：
+
+#### 终端 1：启动后端 Django 服务（必须）
+
+```powershell
+# 1. 进入后端目录
+cd backend
+
+# 2. 如果是首次运行，初始化环境与数据库：
+# 方式 A（标准 Python）：
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py seed_demo
+
+# 方式 B（如果电脑安装了 uv 工具）：
+# uv venv .venv
+# uv pip install --python .venv\Scripts\python.exe -r requirements.txt
+# uv run --python .venv\Scripts\python.exe python manage.py migrate
+# uv run --python .venv\Scripts\python.exe python manage.py seed_demo
+
+# 3. 启动后端服务器（运行在 8000 端口）
+.\.venv\Scripts\python.exe manage.py runserver 0.0.0.0:8000
+```
+> 后端服务就绪后，访问 `http://127.0.0.1:8000/api` 即可看到服务就绪状态。
+
+#### 终端 2：启动前端 Vue 3 界面（另开一个终端）
+
+```powershell
+# 1. 确保在项目根目录（D:\智慧）
+cd D:\智慧
+
+# 2. 安装前端依赖（首次运行）
+npm install
+
+# 3. 启动开发服务器并自动弹出浏览器
+npm run dev -- --open
+```
+
+默认前端开发地址：`http://localhost:5173`。
+
+---
+
+### 方案三：Docker Compose 一键启动
+
+如果您本地安装了 Docker，可直接使用容器化一键部署：
+
+```powershell
+docker compose up --build
+```
+Compose 会同时拉起 Django 后端（包含自动数据迁移与 `seed_demo` 初始化）和 Vue 开发服务器。
+
+---
+
+## 🔑 演示账号密码
+
+执行 `seed_demo` 后系统已预置好具备借阅与预约演示数据的测试账号：
+
+| 身份角色 | 登录邮箱 | 初始密码 | 权限功能说明 |
+| :--- | :--- | :--- | :--- |
+| **学生 (读者)** | `student@zhixing.local` | `Student123!` | 书目检索、智能推荐、借阅还书、预约排队、到馆核销、个人 Reading DNA 画像 |
+| **教职工** | `staff@zhixing.local` | `Staff123!` | 享受教职工借阅权限、预约排队与个人中心 |
+| **管理员** | `admin@zhixing.local` | `Admin123!` | 书目增删改查录入、全馆流通数据大屏、预约排队监控与借阅 TOP10 统计 |
+
+*(以上密码仅供本地开发和评审演示使用)*
+
+---
+
+## ❓ 常见“打不开前端 / 无法登录”排查指引 (FAQ)
+
+- **Q1：为什么我直接双击 `index.html` 页面是空白的？**
+  - **原因**：本项目采用 Vue 3 + Vite 现代工程化架构，代码通过原生 ES Modules（`<script type="module">`）加载。直接用文件浏览器打开（`file:///...` 协议）会被现代浏览器的沙箱跨域安全机制（CORS）拦截。
+  - **解决办法**：请在终端中执行 `npm run dev`，并通过浏览器访问 `http://localhost:5173`。
+
+- **Q2：打开前端网页后，输入账号密码点击登录提示“无法连接服务器”？**
+  - **原因**：这是因为**只启动了前端、未启动后端 Django 服务**。
+  - **解决办法**：在另一个独立的终端中进入 `backend/` 目录并运行 `python manage.py runserver`，确保后端在 `8000` 端口保持运行状态。
+
+- **Q3：提示 5173 或 8000 端口被占用怎么办？**
+  - Vite 会自动探测顺延至 `5174`、`5175` 端口并在控制台提示新地址；
+  - 若 Django 的 8000 端口被其他程序占用，可指定端口启动：`python manage.py runserver 8001`，并同步更新 `.env` 中的 `VITE_API_BASE_URL`。
+
+---
+
 ## 🌟 核心特色与智慧升级
 
 本项目在基础借还书 CRUD 之上，重点攻关了图书馆业务场景中**性价比最高、可实现性最高、含金量最显著**的两大核心维度：
@@ -30,71 +135,6 @@
 - 自动下发到馆待取提醒、超时失效通知、借阅还书提醒与系统公告，支持单条已读与一键全部已读。
 
 ---
-
-## 启动
-
-```bash
-npm install
-npm run dev
-```
-
-默认开发地址：`http://localhost:5173`
-
-生产构建：
-
-```bash
-npm run build
-npm run preview
-```
-
-## 全栈启动
-
-后端使用 uv 管理 Python 环境：
-
-```powershell
-Set-Location backend
-uv venv .venv
-uv pip install --python .venv\Scripts\python.exe -r requirements.txt
-uv run --python .venv\Scripts\python.exe python manage.py migrate
-uv run --python .venv\Scripts\python.exe python manage.py seed_demo
-uv run --python .venv\Scripts\python.exe python manage.py runserver
-```
-
-另开终端启动 Vue：
-
-```powershell
-npm run dev
-```
-
-默认服务地址：前端 `http://localhost:5173`，后端 `http://localhost:8000`。
-
-### Docker Compose
-
-```powershell
-docker compose up --build
-```
-
-Compose 会启动后端和 Vue 开发服务器。后端容器启动时自动迁移并执行 `seed_demo`。默认 Compose 仍使用 SQLite；生产环境建议注入 PostgreSQL `DATABASE_URL`，并替换 Django 密钥。
-
-### 示例账户
-
-种子命令创建以下本地演示账户：
-
-- 管理员：`admin@zhixing.local` / `Admin123!`
-- 学生：`student@zhixing.local` / `Student123!`
-- 教职工：`staff@zhixing.local` / `Staff123!`
-
-这些密码仅用于本地演示，不得用于生产环境。
-
-## 环境变量
-
-复制 `.env.example` 为 `.env`，按后端地址修改：
-
-```env
-VITE_API_BASE_URL=http://localhost:8000/api
-```
-
-如果未配置，前端默认请求 `http://localhost:8000/api`。
 
 ## 页面
 

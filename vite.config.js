@@ -5,8 +5,14 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     port: 5173,
+    host: '0.0.0.0', // 允许局域网与本机同时访问
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
   },
-  // 公网演示时由 Vite 预览服务把同源 API 请求转发给本机 Django。
   preview: {
     allowedHosts: ['3qawb6uhbkhrhvatx2a3uvb5em.srv.us'],
     proxy: {

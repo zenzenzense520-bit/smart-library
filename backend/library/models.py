@@ -126,18 +126,63 @@ class Loan(models.Model):
 class Reservation(models.Model):
     class Status(models.TextChoices):
         WAITING = 'waiting', '排队中'
+        NOTIFIED = 'notified', '到馆待取'
         FULFILLED = 'fulfilled', '已满足'
+        EXPIRED = 'expired', '超时失效'
         CANCELLED = 'cancelled', '已取消'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reservations')
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='reservations')
     reserved_at = models.DateTimeField(auto_now_add=True)
+    notified_at = models.DateTimeField(null=True, blank=True)
+    hold_expires_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.WAITING)
 
     class Meta:
         ordering = ['reserved_at']
-        constraints = [models.UniqueConstraint(fields=['user', 'book'], condition=models.Q(status='waiting'), name='unique_waiting_reservation')]
+        indexes = [
+            models.Index(fields=['book', 'status']),
+            models.Index(fields=['user', 'status']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'book'],
+                condition=models.Q(status__in=['waiting', 'notified']),
+                name='unique_waiting_reservation'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user.email} - {self.book.title} ({self.status})'
+
+
+class Notification(models.Model):
+    class Type(models.TextChoices):
+        RESERVATION_ARRIVED = 'reservation_arrived', '预约到馆'
+        RESERVATION_EXPIRED = 'reservation_expired', '预约超时释放'
+        LOAN_DUE_SOON = 'loan_due_soon', '即将到期'
+        LOAN_OVERDUE = 'loan_overdue', '借阅逾期'
+        SYSTEM = 'system', '系统通知'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    notification_type = models.CharField(max_length=40, choices=Type.choices, default=Type.SYSTEM)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    related_book = models.ForeignKey(Book, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read']),
+            models.Index(fields=['user', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user.email} - {self.title}'
 
 
 class AuditLog(models.Model):

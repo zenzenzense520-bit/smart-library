@@ -67,3 +67,5 @@ REST_FRAMEWORK = {
 }
 SIMPLE_JWT = {'AUTH_HEADER_TYPES': ('Bearer',), 'ACCESS_TOKEN_LIFETIME': __import__('datetime').timedelta(hours=2)}
 FINE_PER_DAY = __import__('decimal').Decimal(os.getenv('FINE_PER_DAY', '1.00'))
+
+RESERVATION_HOLD_HOURS = int(os.getenv('RESERVATION_HOLD_HOURS', '48'))

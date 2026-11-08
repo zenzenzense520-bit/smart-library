@@ -2,6 +2,8 @@ node_modules
 dist
 .env
 .env.local
+.runtime/
+logs/*.log
 backend/.venv
 backend/__pycache__
 backend/**/__pycache__

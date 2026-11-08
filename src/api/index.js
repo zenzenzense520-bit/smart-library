@@ -96,6 +96,32 @@ export const loansApi = {
   returnBook: (id) => request(`/loans/${id}/return`, { method: 'PATCH' }),
 }
 
+export const reservationsApi = {
+  list: (params = {}) => {
+    const query = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') query.set(key, value)
+    })
+    return request(`/reservations${query.toString() ? `?${query}` : ''}`)
+  },
+  create: (bookId) => request('/reservations', { method: 'POST', body: jsonBody({ book: bookId }) }),
+  cancel: (id) => request(`/reservations/${id}/cancel`, { method: 'POST' }),
+  claim: (id) => request(`/reservations/${id}/claim`, { method: 'POST' }),
+}
+
+export const notificationsApi = {
+  list: () => request('/notifications'),
+  unreadCount: () => request('/notifications/unread-count'),
+  markAsRead: (id) => request(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllAsRead: () => request('/notifications/read-all', { method: 'POST' }),
+}
+
+export const recommendationsApi = {
+  forYou: (limit = 6) => request(`/recommendations/for-you?limit=${limit}`),
+  related: (bookId, limit = 4) => request(`/recommendations/books/${bookId}/related?limit=${limit}`),
+  userProfile: () => request('/recommendations/user-profile'),
+}
+
 export const adminApi = {
   stats: () => request('/admin/stats'),
 }
